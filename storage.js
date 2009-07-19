@@ -59,8 +59,7 @@ Storage.prototype = {
     var sql = "DROP TABLE " + name;
     this.run(sql, success, failure);
   },
-  // conditions is obj literal with {colName: reqVal, colName: reqVal}
-  read: function(table, conditions, options, success, failure) {
+  _buildConditionSql: function(conditions) {
     var conditionSql = "";
     for(colName in conditions) {
       if(typeof conditions[colName] === "string")
@@ -69,10 +68,15 @@ Storage.prototype = {
         conditionSql += colName + " = " + conditions[colName] + " AND ";
     }
     conditionSql = conditionSql.slice(0, -4);
+
+    return (" WHERE " + conditionSql);
+  },
+  // conditions is obj literal with {colName: reqVal, colName: reqVal}
+  read: function(table, conditions, options, success, failure) {
     
     var sql = "SELECT * FROM " + table;
     if(conditions)
-      sql += " WHERE " + conditionSql;
+      sql += this._buildConditionSql(conditions);
       
     if(options) {
       if(options.group)
@@ -100,7 +104,12 @@ Storage.prototype = {
         console.log(rows.length);
       };
     }
-    this.read(table, conditions, success, failure);
+    
+    var sql = "SELECT COUNT(*) FROM " + table;
+    if(conditions)
+      sql += this._buildConditionSql(conditions);
+    
+    this.run(sql, success, failure);
   },
   // data is obj literal with {colName: colVal, colName: colVal}
   write: function(table, data, success, failure) {
@@ -135,17 +144,9 @@ Storage.prototype = {
   },
   // conditions is an obj literal with {colName: reqVal, colName: reqVal}
   erase: function(table, conditions, success, failure) {
-    var conditionSql = "";
-    if(conditions) {
-      for(colName in conditions) {
-        if(typeof conditions[colName] === "string")
-          conditionSql += colName + " = " + "'" + conditions[colName] + "' AND ";
-        else
-          conditionSql += colName + " = " + conditions[colName] + " AND ";
-      }
-      conditionSql = " WHERE " + conditionSql.slice(0, -4);
-    }
-    var sql = "DELETE FROM " + table + conditionSql;
+    var sql = "DELETE FROM " + table;
+    if(conditions)
+      sql += this._buildConditionSql(conditions);
     this.run(sql, success, failure);
   },
   // func takes a tx obj and has a series of tx.executeSql calls and throws an exception at some point if unhappy path is found
