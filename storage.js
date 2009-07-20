@@ -6,7 +6,12 @@ Storage.prototype = {
   _buildRows: function(resultSet) {
     var rows = [];
     for(var i = 0, j = resultSet.rows.length; i < j; i++) {
-      rows.push(resultSet.rows.item(i));
+      var currentRow = resultSet.rows.item(i);
+      var usableRow = {};
+      for(var col in currentRow) {
+        usableRow[col] = currentRow[col];
+      }
+      rows.push(usableRow);
     }
     return rows;
   },
