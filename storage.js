@@ -12,30 +12,11 @@ Storage.prototype = {
   },
   // success always takes an array of row objects, failure takes an error string
   run: function(sql, success, failure) {
-    var self = this;
-    if(success) {
-      var oldSuccess = success;
-      success = function(resultSet, insertId) {
-        if(insertId)
-          oldSuccess(insertId);
-        else
-          oldSuccess(self._buildRows(resultSet));
-      };
-    }
-    else {
-      var success = function(resultSet) {
-        if(resultSet.length > 0)
-          console.log(self._buildRows(resultSet));
-      };
-    }
-    
     console.log(sql);
     this.db.transaction(function(tx) {
       tx.executeSql(sql, [],
         function(tx, resultSet) {
-          if(sql.search("INSERT") !== -1)
-            success(resultSet, resultSet.insertId);
-          else
+          if(success)
             success(resultSet);
         },
         function(tx, error) {
@@ -73,6 +54,20 @@ Storage.prototype = {
   },
   // conditions is obj literal with {colName: reqVal, colName: reqVal}
   read: function(table, conditions, options, success, failure) {
+    var self = this;
+    if(success) {
+      var oldSuccess = success;
+      success = function(resultSet) {
+        var rows = self._buildRows(resultSet);
+        oldSuccess(rows);
+      };
+    }
+    else {
+      var success = function(resultSet) {
+        var rows = self._buildRows(resultSet);
+        console.log(rows);
+      };
+    }
     
     var sql = "SELECT * FROM " + table;
     if(conditions)
@@ -95,13 +90,15 @@ Storage.prototype = {
   count: function(table, conditions, success, failure) {
     if(success) {
       var oldSuccess = success;
-      success = function(rows) {
-        oldSuccess(rows.length);
+      success = function(resultSet) {
+        var rowCount = resultSet.rows.item(0)["COUNT(*)"];
+        oldSuccess(rowCount);
       };
     }
     else {
-      var success = function(rows) {
-        console.log(rows.length);
+      var success = function(resultSet) {
+        var rowCount = resultSet.rows.item(0)["COUNT(*)"];
+        console.log(rowCount);
       };
     }
     
@@ -112,6 +109,7 @@ Storage.prototype = {
     this.run(sql, success, failure);
   },
   // data is obj literal with {colName: colVal, colName: colVal}
+  // success takes no params for update, insertId if insert
   write: function(table, data, success, failure) {
     if(data.id) {
       // build assignment pairs and trim trailing comma
@@ -125,6 +123,18 @@ Storage.prototype = {
       setSql = setSql.slice(0, -2);
       
       var sql = "UPDATE " + table + " SET " + setSql + " WHERE id = " + data.id;
+      
+      if(success) {
+        var oldSuccess = success;
+        success = function(resultSet) {
+          oldSuccess();
+        };
+      }
+      else {
+        var success = function(resultSet) {
+          console.log(resultSet);
+        };
+      }
     }
     else {
       var colSql = "", valSql = "";
@@ -139,6 +149,18 @@ Storage.prototype = {
       valSql = valSql.slice(0, -2);
       
       var sql = "INSERT INTO " + table + " (" + colSql + ") VALUES(" + valSql + ")";
+      
+      if(success) {
+        var oldSuccess = success;
+        success = function(resultSet) {
+          oldSuccess(resultSet.insertId);
+        };
+      }
+      else {
+        var success = function(resultSet) {
+          console.log(resultSet.insertId);
+        };
+      }
     }
     this.run(sql, success, failure);
   },
