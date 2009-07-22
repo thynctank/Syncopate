@@ -4,4 +4,6 @@ Make transact() more user-friendly
 
 Add update(table, data, conditions, success, failure) method to update across rows
 
+Disable logging by default, actually replace output function w/ stub or working output func.
+
 Support LIKE "%X%" in condition-parsing. Break condition-parsing into private method.
