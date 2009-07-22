@@ -56,15 +56,15 @@ Reading Rows from a Table
 
 `read(tableName, conditions, options, success, failure)`: `tableName` is name of table to read from. `conditions` is an object literal with properties matching column names in the table being queried and values matching conditional values on those specific columns. `options` is an object literal with properties matching a number of available SELECT statement modifiers (group, order, limit and offset are available) and properties matching the values to pass into these SQL clauses. The success callback of a `read()` call 
 
-An example may help to illustrate.
+An example may help to illustrate. Here we read up the first box whose contents is set to "Empty" and change a few column values before writing them back down, updating the existing record.
 
-      s.read("boxes", {contents: "Empty"}, {}, function(rows) {
-        for(var i = 0, j = rows.length; i < j; i++) {
-          // do something with this row's data
-        }
+      s.read("boxes", {contents: "Empty"}, {limit: 1}, function(rows) {
+        rows[0].label = "Empty box";
+        rows[0].contents = "";
+        s.write("boxes", rows[0]);
       });
       
-This example shows a query on the boxes table, requiring that rows match a contents of "Empty" to be returned. Once these rows are obtained, they are passed back to the success callback as the `rows` parameter, and can be looped over, have their individual contents inspected, etc.
+This example shows a query on the boxes table. Once the data are obtained, they are passed back to the success callback as the `rows` parameter, and can be looped over, have their individual contents inspected, etc. Any row data processed within the callback will have its `id` property set ahead of time, and so writing it back down causes an UPDATE, not an INSERT.
 
 Obtaining the Number of Rows in a Table
 ---------------------------------------

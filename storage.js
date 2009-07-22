@@ -3,6 +3,7 @@ function Storage(name) {
 } 
 
 Storage.prototype = {
+  // copy all col data from read-only row object into new writable object
   _buildRows: function(resultSet) {
     var rows = [];
     for(var i = 0, j = resultSet.rows.length; i < j; i++) {

@@ -1,3 +1,5 @@
 Fix count()
 
 Make transact() more user-friendly
+
+Add update(table, data, conditions, success, failure) method to update across rows
