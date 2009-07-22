@@ -66,6 +66,11 @@ An example may help to illustrate. Here we read up the first box whose contents 
       
 This example shows a query on the boxes table. Once the data are obtained, they are passed back to the success callback as the `rows` parameter, and can be looped over, have their individual contents inspected, etc. Any row data processed within the callback will have its `id` property set ahead of time, and so writing it back down causes an UPDATE, not an INSERT.
 
+Updating Rows in a Table Conditionally
+--------------------------------------
+
+`update(tableName, data, conditions, success, failure)`: `tableName` is name of table to update. `data` describes the columns to update and the values for those columns. Not all columns need be specified. `conditions` is an object literal as explained in `read()` description. All rows matching conditions specified will be updated accordingly.
+
 Obtaining the Number of Rows in a Table
 ---------------------------------------
 
