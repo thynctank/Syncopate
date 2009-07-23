@@ -56,7 +56,10 @@ Storage.prototype = {
     }
     conditionSql = conditionSql.slice(0, -4);
 
-    return (" WHERE " + conditionSql);
+    if(conditionSql)
+      conditionSql = (" WHERE " + conditionSql);
+      
+    return conditionSql;
   },
   // conditions is obj literal with {colName: reqVal, colName: reqVal}
   read: function(table, conditions, options, success, failure) {
@@ -76,8 +79,7 @@ Storage.prototype = {
     }
     
     var sql = "SELECT * FROM " + table;
-    if(conditions)
-      sql += this._buildConditionSql(conditions);
+    sql += this._buildConditionSql(conditions);
       
     if(options) {
       if(options.group)
@@ -109,26 +111,34 @@ Storage.prototype = {
     }
     
     var sql = "SELECT COUNT(*) FROM " + table;
-    if(conditions)
-      sql += this._buildConditionSql(conditions);
+    sql += this._buildConditionSql(conditions);
     
     this.run(sql, success, failure);
+  },
+
+  _buildUpdateSql: function(table, data) {
+    var setSql = "";
+    for(colName in data) {
+      if(typeof data[colName] === "string")
+        setSql += colName + " = '" + data[colName] + "', ";
+      else
+        setSql += colName + " = " + data[colName] + ", ";
+    }
+    
+    setSql = setSql.slice(0, -2);
+    
+    var sql = "UPDATE " + table + " SET " + setSql;
+    if(data.id) 
+      sql += " WHERE id = " + data.id;
+      
+    return sql;
   },
   // data is obj literal with {colName: colVal, colName: colVal}
   // success takes no params for update, insertId if insert
   write: function(table, data, success, failure) {
     if(data.id) {
       // build assignment pairs and trim trailing comma
-      var setSql = "";
-      for(colName in data) {
-        if(typeof data[colName] === "string")
-          setSql += colName + " = '" + data[colName] + "', ";
-        else
-          setSql += colName + " = " + data[colName] + ", ";
-      }
-      setSql = setSql.slice(0, -2);
-      
-      var sql = "UPDATE " + table + " SET " + setSql + " WHERE id = " + data.id;
+      var sql = this._buildUpdateSql(table, data);
       
       if(success) {
         var oldSuccess = success;
@@ -170,11 +180,28 @@ Storage.prototype = {
     }
     this.run(sql, success, failure);
   },
+  update: function(table, data, conditions, success, failure) {
+    var sql = this._buildUpdateSql(table, data);
+    sql += this._buildConditionSql(conditions);
+    
+    if(success) {
+      var oldSuccess = success;
+      success = function(resultSet) {
+        oldSuccess();
+      };
+    }
+    else {
+      var success = function(resultSet) {
+        console.log(resultSet);
+      };
+    }
+    
+    this.run(sql, success, failure);
+  },
   // conditions is an obj literal with {colName: reqVal, colName: reqVal}
   erase: function(table, conditions, success, failure) {
     var sql = "DELETE FROM " + table;
-    if(conditions)
-      sql += this._buildConditionSql(conditions);
+    sql += this._buildConditionSql(conditions);
     this.run(sql, success, failure);
   },
   // func takes a tx obj and has a series of tx.executeSql calls and throws an exception at some point if unhappy path is found
