@@ -48,9 +48,21 @@ Storage.prototype = {
   },
   _buildConditionSql: function(conditions) {
     var conditionSql = "";
+    if(!conditions)
+      return conditionSql;
+    
     for(colName in conditions) {
       if(typeof conditions[colName] === "string")
         conditionSql += colName + " = '" + conditions[colName] + "' AND ";
+      else if(conditions[colName].constructor === Array) {
+        conditionSql += colName + " " + conditions[colName][0] + " ";
+        if(typeof conditions[colName][1] === "string") {
+          conditionSql += "'" + conditions[colName][1] + "' AND ";
+        }
+        else {
+          conditionSql += conditions[colName][1] + " AND ";
+        }
+      }
       else
         conditionSql += colName + " = " + conditions[colName] + " AND ";
     }
@@ -61,7 +73,7 @@ Storage.prototype = {
       
     return conditionSql;
   },
-  // conditions is obj literal with {colName: reqVal, colName: reqVal}
+  // conditions is obj literal with {colName: reqVal, colName: reqVal} or {colName: [comparisonOp, comparisonVal]}
   read: function(table, conditions, options, success, failure) {
     var self = this;
     if(success) {
