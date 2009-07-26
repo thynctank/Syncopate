@@ -14,17 +14,17 @@ All functionality in Syncopate is handled as methods of the Storage class. To be
 
 Once you have an instance, you can call on the functionality like so:
 
-      var initialData = [
-        {label: "Box One", contents: "Empty"},
-        {label: "Box Thirty", contents: "It's a Secret!"},
-        {label: "Box One More", contents: "Socks"}
-      ];
+    var initialData = [
+      {label: "Box One", contents: "Empty"},
+      {label: "Box Thirty", contents: "It's a Secret!"},
+      {label: "Box One More", contents: "Socks"}
+    ];
 
-      s.createTable("boxes", {label: "string", contents: "string"}, function() {
-        for(var i = 0, j = initialData.length; i < j; i++) {
-          s.write("boxes", initialData[i]);
-        }
-      });
+    s.createTable("boxes", {label: "string", contents: "string"}, function() {
+      for(var i = 0, j = initialData.length; i < j; i++) {
+        s.write("boxes", initialData[i]);
+      }
+    });
       
 This sample demonstrates the usage pattern for all calls in Syncopate, which is that *dependent actions must occur as calls nested inside of their independent predecessors*. In the example, we could not write the box data into a table if the table didn't first exist, so we call `createTable` and as its success callback we loop through the initialData object and `write` the individual records to the table. Note the inner function which calls on Syncopate does not use a callback, and we are in fact *launching multiple asynchronous processes* via this loop.
 
@@ -58,19 +58,19 @@ Reading Rows from a Table
 
 An example may help to illustrate. Here we read up the first box whose contents is set to "Empty" and change a few column values before writing them back down, updating the existing record.
 
-      s.read("boxes", {contents: "Empty"}, {limit: 1}, function(rows) {
-        rows[0].label = "Empty box";
-        rows[0].contents = "";
-        s.write("boxes", rows[0]);
-      });
+    s.read("boxes", {contents: "Empty"}, {limit: 1}, function(rows) {
+      rows[0].label = "Empty box";
+      rows[0].contents = "";
+      s.write("boxes", rows[0]);
+    });
       
 This example shows a query on the boxes table. Once the data are obtained, they are passed back to the success callback as the `rows` parameter, and can be looped over, have their individual contents inspected, etc. Any row data processed within the callback will have its `id` property set ahead of time, and so writing it back down causes an UPDATE, not an INSERT.
 
 An example of arbitrary comparison operators:
 
-      s.read("boxes", {contents: ["NOT LIKE", "%crap%"]}, null, function(rows) {
-        //do stuff
-      });
+    s.read("boxes", {contents: ["NOT LIKE", "%crap%"]}, null, function(rows) {
+      //do stuff
+    });
       
 This will find all boxes whose contents is NOT LIKE '%crap%'. The SQL will be generated appropriately and results passed into the callback as with the previous example. Also note the passing in of a null value for the options object, since we have no need to modify the query beyond the conditions.
 
