@@ -54,7 +54,7 @@ Writing a Row to a Table
 Reading Rows from a Table
 -------------------------
 
-`read(tableName, conditions, options, success, failure)`: `tableName` is name of table to read from. `conditions` is an object literal with properties matching column names in the table being queried and values matching conditional values on those specific columns. `options` is an object literal with properties matching a number of available SELECT statement modifiers (group, order, limit and offset are available) and properties matching the values to pass into these SQL clauses. The success callback of a `read()` call 
+`read(tableName, conditions, options, success, failure)`: `tableName` is name of table to read from. `conditions` is an object literal with properties matching column names in the table being queried and values matching conditional values on those specific columns. When passing in simple scalar values, these conditions will be made as equality conditions. When being passed an array, the first element of the array should be a string containing the comparison operator of choice, and the second element should be the comparison value. `options` is an object literal with properties matching a number of available SELECT statement modifiers (group, order, limit and offset are available) and properties matching the values to pass into these SQL clauses. The success callback of a `read()` call
 
 An example may help to illustrate. Here we read up the first box whose contents is set to "Empty" and change a few column values before writing them back down, updating the existing record.
 
@@ -65,6 +65,14 @@ An example may help to illustrate. Here we read up the first box whose contents 
       });
       
 This example shows a query on the boxes table. Once the data are obtained, they are passed back to the success callback as the `rows` parameter, and can be looped over, have their individual contents inspected, etc. Any row data processed within the callback will have its `id` property set ahead of time, and so writing it back down causes an UPDATE, not an INSERT.
+
+An example of arbitrary comparison operators:
+
+      s.read("boxes", {contents: ["NOT LIKE", "%crap%"]}, null, function(rows) {
+        //do stuff
+      });
+      
+This will find all boxes whose contents is NOT LIKE '%crap%'. The SQL will be generated appropriately and results passed into the callback as with the previous example. Also note the passing in of a null value for the options object, since we have no need to modify the query beyond the conditions.
 
 Updating Rows in a Table Conditionally
 --------------------------------------

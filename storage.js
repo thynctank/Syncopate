@@ -52,12 +52,17 @@ Storage.prototype = {
       return conditionSql;
     
     for(colName in conditions) {
-      if(typeof conditions[colName] === "string")
-        conditionSql += colName + " = '" + conditions[colName] + "' AND ";
+      if(typeof conditions[colName] === "string") {
+        var comparisonString = conditions[colName];
+        comparisonString = comparisonString.replace(/'/g, "''");
+        conditionSql += colName + " = '" + comparisonString + "' AND ";
+      }
       else if(conditions[colName].constructor === Array) {
         conditionSql += colName + " " + conditions[colName][0] + " ";
         if(typeof conditions[colName][1] === "string") {
-          conditionSql += "'" + conditions[colName][1] + "' AND ";
+          var comparisonString = conditions[colName][1];
+          comparisonString = comparisonString.replace(/'/g, "''");
+          conditionSql += "'" + comparisonString + "' AND ";
         }
         else {
           conditionSql += conditions[colName][1] + " AND ";
