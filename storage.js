@@ -3,6 +3,24 @@ function Storage(name) {
 } 
 
 Storage.prototype = {
+  logging: false,
+  _log: function(obj) {
+    if(!this.logging)
+      return;
+    // branch the lazy definition of _log (jacked from JazzRecord)
+    if(typeof Titanium !== "undefined") {
+      this._log = function(obj) {
+        Titanium.API.debug(obj);
+      };
+    }
+    
+    else if(typeof console !== "undefined" && typeof console.log === "function") {
+      this._log = function(obj) {
+        console.log(obj);
+      };
+    }
+    this._log(obj);
+  },
   // copy all col data from read-only row object into new writable object
   _buildRows: function(resultSet) {
     var rows = [];
@@ -15,36 +33,6 @@ Storage.prototype = {
       rows.push(usableRow);
     }
     return rows;
-  },
-  // success always takes an array of row objects, failure takes an error string
-  run: function(sql, success, failure) {
-    console.log(sql);
-    this.db.transaction(function(tx) {
-      tx.executeSql(sql, [],
-        function(tx, resultSet) {
-          if(success)
-            success(resultSet);
-        },
-        function(tx, error) {
-          if(failure)
-            failure(error.message);
-        }
-      );
-    });
-  },
-  // cols should be obj literal with {colName: colType, colName: colType}
-  createTable: function(name, cols, success, failure) {
-    var colSql = "";
-    for(colName in cols) {
-      colSql += ", " + colName + " " + cols[colName];
-    }
-    
-    var sql = "CREATE TABLE IF NOT EXISTS " + name + " (id INTEGER PRIMARY KEY AUTOINCREMENT" + colSql + ")";
-    this.run(sql, success, failure);
-  },
-  dropTable: function(name, success, failure) {
-    var sql = "DROP TABLE " + name;
-    this.run(sql, success, failure);
   },
   _buildConditionSql: function(conditions) {
     var conditionSql = "";
@@ -78,6 +66,53 @@ Storage.prototype = {
       
     return conditionSql;
   },
+  _buildUpdateSql: function(table, data) {
+    var setSql = "";
+    for(colName in data) {
+      if(typeof data[colName] === "string")
+        setSql += colName + " = '" + data[colName] + "', ";
+      else
+        setSql += colName + " = " + data[colName] + ", ";
+    }
+    
+    setSql = setSql.slice(0, -2);
+    
+    var sql = "UPDATE " + table + " SET " + setSql;
+    if(data.id) 
+      sql += " WHERE id = " + data.id;
+      
+    return sql;
+  },
+  // success always takes an array of row objects, failure takes an error string
+  run: function(sql, success, failure) {
+    this._log(sql);
+    this.db.transaction(function(tx) {
+      tx.executeSql(sql, [],
+        function(tx, resultSet) {
+          if(success)
+            success(resultSet);
+        },
+        function(tx, error) {
+          if(failure)
+            failure(error.message);
+        }
+      );
+    });
+  },
+  // cols should be obj literal with {colName: colType, colName: colType}
+  createTable: function(name, cols, success, failure) {
+    var colSql = "";
+    for(colName in cols) {
+      colSql += ", " + colName + " " + cols[colName];
+    }
+    
+    var sql = "CREATE TABLE IF NOT EXISTS " + name + " (id INTEGER PRIMARY KEY AUTOINCREMENT" + colSql + ")";
+    this.run(sql, success, failure);
+  },
+  dropTable: function(name, success, failure) {
+    var sql = "DROP TABLE " + name;
+    this.run(sql, success, failure);
+  },
   // conditions is obj literal with {colName: reqVal, colName: reqVal} or {colName: [comparisonOp, comparisonVal]}
   read: function(table, conditions, options, success, failure) {
     var self = this;
@@ -91,7 +126,7 @@ Storage.prototype = {
     else {
       var success = function(resultSet) {
         var rows = self._buildRows(resultSet);
-        console.log(rows);
+        self._log(rows);
       };
     }
     
@@ -123,7 +158,7 @@ Storage.prototype = {
     else {
       var success = function(resultSet) {
         var rowCount = resultSet.rows.item(0)["COUNT(*)"];
-        console.log(rowCount);
+        self._log(rowCount);
       };
     }
     
@@ -131,24 +166,6 @@ Storage.prototype = {
     sql += this._buildConditionSql(conditions);
     
     this.run(sql, success, failure);
-  },
-
-  _buildUpdateSql: function(table, data) {
-    var setSql = "";
-    for(colName in data) {
-      if(typeof data[colName] === "string")
-        setSql += colName + " = '" + data[colName] + "', ";
-      else
-        setSql += colName + " = " + data[colName] + ", ";
-    }
-    
-    setSql = setSql.slice(0, -2);
-    
-    var sql = "UPDATE " + table + " SET " + setSql;
-    if(data.id) 
-      sql += " WHERE id = " + data.id;
-      
-    return sql;
   },
   // data is obj literal with {colName: colVal, colName: colVal}
   // success takes no params for update, insertId if insert
@@ -164,8 +181,9 @@ Storage.prototype = {
         };
       }
       else {
+        var self = this;
         var success = function(resultSet) {
-          console.log(resultSet);
+          self._log(resultSet);
         };
       }
     }
@@ -190,8 +208,9 @@ Storage.prototype = {
         };
       }
       else {
+        var self = this;
         var success = function(resultSet) {
-          console.log(resultSet.insertId);
+          self._log(resultSet.insertId);
         };
       }
     }
@@ -208,8 +227,9 @@ Storage.prototype = {
       };
     }
     else {
+      var self = this;
       var success = function(resultSet) {
-        console.log(resultSet);
+        self._log(resultSet);
       };
     }
     

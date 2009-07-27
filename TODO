@@ -1,5 +1,3 @@
 Disable logging by default, actually replace output function w/ stub or working output func.
 
 Make transact() more user-friendly
-
-Support LIKE "%X%" in condition-parsing? Break condition-parsing into private method.
