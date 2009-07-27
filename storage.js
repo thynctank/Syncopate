@@ -156,6 +156,7 @@ Storage.prototype = {
       };
     }
     else {
+      var self = this;
       var success = function(resultSet) {
         var rowCount = resultSet.rows.item(0)["COUNT(*)"];
         self._log(rowCount);
@@ -170,6 +171,7 @@ Storage.prototype = {
   // data is obj literal with {colName: colVal, colName: colVal}
   // success takes no params for update, insertId if insert
   write: function(table, data, success, failure) {
+    var self = this;
     if(data.id) {
       // build assignment pairs and trim trailing comma
       var sql = this._buildUpdateSql(table, data);
@@ -181,7 +183,6 @@ Storage.prototype = {
         };
       }
       else {
-        var self = this;
         var success = function(resultSet) {
           self._log(resultSet);
         };
@@ -208,7 +209,6 @@ Storage.prototype = {
         };
       }
       else {
-        var self = this;
         var success = function(resultSet) {
           self._log(resultSet.insertId);
         };
