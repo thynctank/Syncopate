@@ -1,3 +1,1 @@
-Disable logging by default, actually replace output function w/ stub or working output func.
-
 Make transact() more user-friendly
