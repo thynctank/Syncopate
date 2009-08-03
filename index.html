@@ -15,30 +15,35 @@
     </div>
     <script type="text/javascript" charset="utf-8">
       var s = new Storage("test");
-      function displayBoxCount() {
-        s.count("boxes", null, function(rowCount) {
-            document.getElementById("boxCount").innerHTML = rowCount;
-          },
-          function(err) {
-            setTimeout(displayBoxCount, 150);
-        });
-      }
       
-      document.getElementById("addABox").onclick = function() {
-        s.write("boxes", {label: "Another Box", contents: "Nothing"}, function() {
-          displayBoxCount();
-        });
-      };
-      
-      document.getElementById("removeABox").onclick = function() {
-        s.read("boxes", null, {order: "id DESC", limit: 1}, function(rows) {
-          s.erase("boxes", {id: rows[0].id}, function() {
+      s.createTable("boxes", {label: "string", contents: "string"}, function() {
+        function displayBoxCount() {
+          s.count("boxes", null, function(rowCount) {
+              document.getElementById("boxCount").innerHTML = rowCount;
+            },
+            function(err) {
+              setTimeout(displayBoxCount, 150);
+          });
+        }
+
+        document.getElementById("addABox").onclick = function() {
+          s.write("boxes", {label: "Another Box", contents: "Nothing"}, function() {
             displayBoxCount();
           });
-        });
-      };
-      
-      displayBoxCount();
+        };
+
+        document.getElementById("removeABox").onclick = function() {
+          s.read("boxes", null, {order: "id DESC", limit: 1}, function(rows) {
+            if(rows.length) {
+              s.erase("boxes", {id: rows[0].id}, function() {
+                displayBoxCount();
+              });
+            }
+          });
+        };
+
+        displayBoxCount();
+      });
     </script>
   </body>
 </html>
