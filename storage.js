@@ -14,6 +14,12 @@ Storage.prototype = {
       };
     }
     
+    else if(typeof Mojo !== "undefined") {
+      this._log = function(obj) {
+        Mojo.Log.info(obj);
+      };
+    }
+    
     else if(typeof console !== "undefined" && typeof console.log === "function") {
       this._log = function(obj) {
         console.log(obj);
