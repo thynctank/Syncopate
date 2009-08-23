@@ -260,7 +260,7 @@ Storage.prototype = {
     this.run(sql, success, failure, tx);
   },
   // func takes a tx obj and has a series of tx.executeSql calls and throws an exception at some point if unhappy path is found
-  transact: function(func) {
-    this.db.transaction(func);
+  transact: function(func, success, failure) {
+    this.db.transaction(func, success, failure);
   }
 };
