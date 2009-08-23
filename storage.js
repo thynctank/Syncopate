@@ -1,5 +1,5 @@
 function Storage(name) {
-  this.db = openDatabase(name);
+  this.db = openDatabase(name + ".syncopate.db");
 } 
 
 Storage.prototype = {
@@ -106,21 +106,48 @@ Storage.prototype = {
     });
   },
   // cols should be obj literal with {colName: colType, colName: colType}
-  createTable: function(name, cols, success, failure) {
+  createTable: function(name, cols, success, failure, tx) {
     var colSql = "";
     for(colName in cols) {
       colSql += ", " + colName + " " + cols[colName];
     }
     
     var sql = "CREATE TABLE IF NOT EXISTS " + name + " (id INTEGER PRIMARY KEY AUTOINCREMENT" + colSql + ")";
-    this.run(sql, success, failure);
+    
+    if(tx) {
+      tx.executeSql(sql, success, failure);
+    }
+    else
+      this.run(sql, success, failure);
   },
-  dropTable: function(name, success, failure) {
+  dropTable: function(name, success, failure, tx) {
     var sql = "DROP TABLE " + name;
-    this.run(sql, success, failure);
+    if(tx) {
+      tx.executeSql(sql, success, failure);
+    }
+    else
+      this.run(sql, success, failure);
+  },
+  createIndex: function(tableName, colName, success, failure, tx) {
+    var sql = "CREATE INDEX IF NOT EXISTS " + tableName + "_" + colName + "_index ON " + tableName + " (" + colName + ")";
+
+    if(tx) {
+      tx.executeSql(sql, success, failure);
+    }
+    else
+      this.run(sql, success, failure);
+  },
+  dropIndex: function(tableName, colName, success, failure, tx) {
+    var sql = "DROP INDEX IF EXISTS " + tableName + "_" + colName + "_index";
+    
+    if(tx) {
+      tx.executeSql(sql, success, failure);
+    }
+    else
+      this.run(sql, success, failure);
   },
   // conditions is obj literal with {colName: reqVal, colName: reqVal} or {colName: [comparisonOp, comparisonVal]}
-  read: function(table, conditions, options, success, failure) {
+  read: function(table, conditions, options, success, failure, tx) {
     var self = this;
     if(success) {
       var oldSuccess = success;
@@ -149,11 +176,15 @@ Storage.prototype = {
       if(options.offset)
         sql += " OFFSET " + options.offset;
     }
-
-    this.run(sql, success, failure);
+    
+    if(tx) {
+      tx.executeSql(sql, success, failure);
+    }
+    else
+      this.run(sql, success, failure);
   },
   // success always takes rowCount
-  count: function(table, conditions, success, failure) {
+  count: function(table, conditions, success, failure, tx) {
     if(success) {
       var oldSuccess = success;
       success = function(resultSet) {
@@ -172,11 +203,15 @@ Storage.prototype = {
     var sql = "SELECT COUNT(*) FROM " + table;
     sql += this._buildConditionSql(conditions);
     
-    this.run(sql, success, failure);
+    if(tx) {
+      tx.executeSql(sql, success, failure);
+    }
+    else
+      this.run(sql, success, failure);
   },
   // data is obj literal with {colName: colVal, colName: colVal}
   // success takes no params for update, insertId if insert
-  write: function(table, data, success, failure) {
+  write: function(table, data, success, failure, tx) {
     var self = this;
     if(data.id) {
       // build assignment pairs and trim trailing comma
@@ -220,9 +255,13 @@ Storage.prototype = {
         };
       }
     }
-    this.run(sql, success, failure);
+    if(tx) {
+      tx.executeSql(sql, success, failure);
+    }
+    else
+      this.run(sql, success, failure);
   },
-  update: function(table, data, conditions, success, failure) {
+  update: function(table, data, conditions, success, failure, tx) {
     var sql = this._buildUpdateSql(table, data);
     sql += this._buildConditionSql(conditions);
     
@@ -239,13 +278,21 @@ Storage.prototype = {
       };
     }
     
-    this.run(sql, success, failure);
+    if(tx) {
+      tx.executeSql(sql, success, failure);
+    }
+    else
+      this.run(sql, success, failure);
   },
   // conditions is an obj literal with {colName: reqVal, colName: reqVal}
-  erase: function(table, conditions, success, failure) {
+  erase: function(table, conditions, success, failure, tx) {
     var sql = "DELETE FROM " + table;
     sql += this._buildConditionSql(conditions);
-    this.run(sql, success, failure);
+    if(tx) {
+      tx.executeSql(sql, success, failure);
+    }
+    else
+      this.run(sql, success, failure);
   },
   // func takes a tx obj and has a series of tx.executeSql calls and throws an exception at some point if unhappy path is found
   transact: function(func) {
