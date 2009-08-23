@@ -259,8 +259,8 @@ Storage.prototype = {
     sql += this._buildConditionSql(conditions);
     this.run(sql, success, failure, tx);
   },
-  // func takes a tx obj and has a series of tx.executeSql calls and throws an exception at some point if unhappy path is found
+  // func takes a tx obj
   transact: function(func, success, failure) {
-    this.db.transaction(func, success, failure);
+    this.db.transaction(func, failure, success);
   }
 };
