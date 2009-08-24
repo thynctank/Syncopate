@@ -8,9 +8,9 @@ Syncopate is free and open-source software, licensed under [MIT License](http://
 Documentaion of Functions
 =========================
 
-All functionality in Syncopate is handled as methods of the Storage class. To begin using it, you must first instantiate Storage like so:
+All functionality in Syncopate is handled as methods on instances of the Storage class. To begin using it, you must first instantiate Storage like so:
 
-      var s = new Storage('myDbName');
+    var s = new Storage('myDbName');
 
 Once you have an instance, you can call on the functionality like so:
 
@@ -40,14 +40,22 @@ Syncopate can run raw SQL queries using `run()`. This method takes a query strin
 Schema
 ------
 
-Syncopate can currently create and drop tables via `createTable()` and `dropTable()`.
+Syncopate can currently create and drop tables via `createTable()` and `dropTable()`. You can also add columns and rename tables with `addColumn()` and `renameTable()`. Indices to speed selecting on columns can be added/removed from the table via `createIndex()` and `dropIndex()`.
 
 `createTable(tableName, columnsObj, success, failure)`: `tableName` is name of table to be created. Tables will only be created if they do not already exist in the database. `columnsObj` is an object literal with properties matching the names of the table you intend to create, and values matching the column types. Note that SQLite (the database used by most Syncopate-capable browsers and runtimes) does not internally respect/enforce these column types, but other systems may. Also note that a column named `id` will automatically be included and should *not* be manually included in the columnsObj. This column will autoincrement and is a unique identifier for rows in the table.
 
 `dropTable(tableName, success, failure)`: `tableName` is the name of the table to be dropped.
 
+`renameTable(oldName, newName, success, failure)`: `oldName` is the name of the table to be renamed. `newName` is the new name for the table.
+
+`addColumn(tableName, colName, colType, success, failure)`: `tableName` is the name of the table on which to add a column. `colName` and `colType` describe the name/type of the column.
+
+`createIndex(tableName, colName, success, failure)`: `tableName` is the name of table on which to add an index, and `colName` is the column to index.
+
+`dopIndex(tableName, colName, success, failure)`: `tableName` is the name of table on which to add an index, and `colName` is the column to index.
+
 Writing a Row to a Table
------------------------
+------------------------
 
 `write(tableName, data, success, failure)`: `tableName` is name of table to write to. `data` is an object literal with property names matching column names in the table, and values indicating values you want written to a row. If a property/column name of `id` is present in the `data` object, an UPDATE will be performed. If this property is *not* present, an INSERT will be performed.
 
@@ -88,3 +96,24 @@ Erasing Data from a Table
 -------------------------
 
 `erase(tableName, conditions, success, failure)`: `tableName` is name of table to erase from. `conditions` matches the object described in `read()` description. DELETEs all rows matching conditions, or all rows if no conditions are passed in.
+
+Optimizing Sequential Operations with Transactions
+--------------------------------------------------
+
+Transactions group related operations together and ensure than either all or none of the operations are run. If any error is encountered, a ROLLBACK occurs, ensuring data never reaches a "partially modified" state. In addition to ensuring this all or none requirement, grouping operations in a single transaction requires less overhead than running them separately, which incurs a new transaction overhead for every operation. Transactions are vital for representing any transfer of value from one column to another.
+
+`transact(func, success, failure)`: func is an arbitrary function provided by the user, which groups multiple operations together. This function should take a transaction object, conventially passed as `tx`, and pass it along to any operations performed within the function. All public functions available in Syncopate can be passed an optional final argument representing a running transaction, which will allow the system to treat these operations as part of the combined transaction. As usual, sequential dependent actions must be called as the success callback for their independent predecessors. In order to programmatically trigger rollback of the database, throw an error anywhere within `func`.
+
+    s.transact(function(tx) {
+      s.erase("boxes", null, function() {
+        s.write("boxes", {label: "A", contents: "nothing much"}, function() {
+          s.write("boxes", {label: "B", contents: "a whole lot"}, function() {
+            s.count("boxes", null, function(rowCount) {
+              console.log(rowCount + " boxes in total");
+            }, null, tx);
+          }, null, tx);
+        }, null, tx);
+      }, null, tx);
+    }, function() {console.log("success")}, function() {console.log("failure")});
+
+This transaction consists of the erasure of all existing boxes, followed by the writing of two separate boxes (A and B), followed by a count of boxes which is printed to console. At the end a success callback is fired, as transactions, like their component operations, can have optional `success` and `failure` callbacks.

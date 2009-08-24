@@ -76,7 +76,7 @@ Storage.prototype = {
     var setSql = "";
     for(colName in data) {
       if(typeof data[colName] === "string")
-        setSql += colName + " = '" + data[colName] + "', ";
+        setSql += colName + " = '" + data[colName].replace(/'/g, "''") + "', ";
       else
         setSql += colName + " = " + data[colName] + ", ";
     }
@@ -92,6 +92,12 @@ Storage.prototype = {
   // success always takes an array of row objects, failure takes an error string
   run: function(sql, success, failure, transaction) {
     this._log(sql);
+    if(success && transaction) {
+      var oldSuccess = success;
+      success = function(tx, resultSet) {
+        oldSuccess(resultSet);
+      };
+    }
     if(transaction)
       transaction.executeSql(sql, [], success, failure);
     else {
@@ -219,7 +225,7 @@ Storage.prototype = {
       for(colName in data) {
         colSql += colName + ", ";
         if(typeof data[colName] === "string")
-          valSql += "'" + data[colName] + "', ";
+          valSql += "'" + data[colName].replace(/'/g, "''") + "', ";
         else
           valSql += data[colName] + ", ";
       }
@@ -269,6 +275,6 @@ Storage.prototype = {
   },
   // func takes a tx obj
   transact: function(func, success, failure) {
-    this.db.transaction(func, failure, success);
+    this.db.transaction(func, failure || null, success || null);
   }
 };
