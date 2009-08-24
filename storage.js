@@ -123,12 +123,20 @@ Storage.prototype = {
     var sql = "DROP TABLE IF EXISTS " + name;
     this.run(sql, success, failure, tx);
   },
+  renameTable: function(oldName, newName, success, failure, tx) {
+    var sql = "ALTER TABLE " + oldName + " RENAME TO " + newName;
+    this.run(sql, success, failure, tx);
+  },
   createIndex: function(tableName, colName, success, failure, tx) {
     var sql = "CREATE INDEX IF NOT EXISTS " + tableName + "_" + colName + "_index ON " + tableName + " (" + colName + ")";
     this.run(sql, success, failure, tx);
   },
   dropIndex: function(tableName, colName, success, failure, tx) {
     var sql = "DROP INDEX IF EXISTS " + tableName + "_" + colName + "_index";
+    this.run(sql, success, failure, tx);
+  },
+  addColumn: function(tableName, colName, colType, success, failure, tx) {
+    var sql = "ALTER TABLE " + tableName + " ADD COLUMN " + colName + " " + colType;
     this.run(sql, success, failure, tx);
   },
   // conditions is obj literal with {colName: reqVal, colName: reqVal} or {colName: [comparisonOp, comparisonVal]}
