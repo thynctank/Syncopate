@@ -1,7 +1,7 @@
 Syncopate Asynchronous Abstraction Layer
 ========================================
 
-Syncopate is a simple abstraction layer on top of HTML5 (and perhaps additional async databases in the future) which can be used to easily read, write, and erase rows from the db, create and drop tables, and eventually will provide easy functionality for performing multiples of these actions nested in transactions.
+Syncopate is a simple abstraction layer on top of HTML5/Web Database (and perhaps additional async databases in the future) which can be used to easily read, write, erase, update and count rows from the db, create, drop, and rename tables, add columns, create/drop indices, and performing multiples of these actions nested in transactions.
 
 Syncopate is free and open-source software, licensed under [MIT License](http://www.opensource.org/licenses/mit-license.php)
 
@@ -37,8 +37,8 @@ Syncopate can run raw SQL queries using `run()`. This method takes a query strin
 
 `run(sql, success, failure)`: `sql` is a raw SQL query. `success` callback can optionally take a "rows" or "lastInsertedId" parameter if the query being run is a SELECT or an INSERT. Generally speaking, `run()` can be avoided, but it's there if you need to run custom queries. `failure` callback takes a string indicating the error message generated.
 
-Schema
-------
+Schema Operations
+-----------------
 
 Syncopate can currently create and drop tables via `createTable()` and `dropTable()`. You can also add columns and rename tables with `addColumn()` and `renameTable()`. Indices to speed selecting on columns can be added/removed from the table via `createIndex()` and `dropIndex()`.
 
