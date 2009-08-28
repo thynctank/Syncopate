@@ -16,7 +16,7 @@ Storage.prototype = {
     
     else if(typeof Mojo !== "undefined") {
       this._log = function(obj) {
-        Mojo.Log.info(obj);
+        Mojo.Log.error(obj);
       };
     }
     
