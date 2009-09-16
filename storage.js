@@ -275,6 +275,6 @@ Storage.prototype = {
   },
   // func takes a tx obj
   transact: function(func, success, failure) {
-    this.db.transaction(func, failure || null, success || null);
+    this.db.transaction(func, failure || function(){}, success || function(){});
   }
 };
