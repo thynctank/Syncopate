@@ -52,7 +52,7 @@ Syncopate can currently create and drop tables via `createTable()` and `dropTabl
 
 `createIndex(tableName, colName, success, failure)`: `tableName` is the name of table on which to add an index, and `colName` is the column to index.
 
-`dopIndex(tableName, colName, success, failure)`: `tableName` is the name of table on which to add an index, and `colName` is the column to index.
+`dropIndex(tableName, colName, success, failure)`: `tableName` is the name of table on which to add an index, and `colName` is the column to index.
 
 Writing a Row to a Table
 ------------------------
