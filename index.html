@@ -1,57 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
     <title>Syncopate Test</title>
     <script src="storage.js" type="text/javascript" charset="utf-8"></script>
+    <script src="qunit.js" type="text/javascript" charset="utf-8"></script>
+    <link rel="stylesheet" href="qunit.css" type="text/css" media="screen" title="no title" charset="utf-8"/>
   </head>
   <body>
-    <div id="main">
-      Box count: <span id="boxCount"></span>
-      <div>
-        <input type="button" value="Add a Box" id="addABox"/>
-        <input type="button" value="Remove a Box" id="removeABox"/>
-      </div>
-      <div>
-        <input type="button" value="Remove index" id="removeIndex"/>
-      </div>
-    </div>
+    <h1 id="qunit-header">QUnit example</h1>
+    <h2 id="qunit-banner"></h2>
+    <h2 id="qunit-userAgent"></h2>
+    <ol id="qunit-tests"></ol>
+    
     <script type="text/javascript" charset="utf-8">
       var s = new Storage("test");
-      s.logging = true;
+      // s.logging = true;
       
-      s.createTable("boxes", {label: "string", contents: "string"}, function() {
-        s.createIndex("boxes", "label", function() {
-          function displayBoxCount() {
-            s.count("boxes", null, function(rowCount) {
-                document.getElementById("boxCount").innerHTML = rowCount;
-              },
-              function(err) {
-                setTimeout(displayBoxCount, 150);
+      module("Syncopate");
+      asyncTest("dropTable and createTable", function() {
+        expect(3);
+        s.dropTable("boxes", function() {
+          ok("dropped boxes");
+          s.dropTable("containers", function() {
+            ok("dropped containers");
+            s.createTable("boxes", {label: "string", contents: "string"}, function() {
+              ok("boxes table created");
+              start();
             });
-          }
-
-          document.getElementById("addABox").onclick = function() {
-            s.write("boxes", {label: "Another Box", contents: "Nothing"}, function() {
-              displayBoxCount();
+          });
+        });
+      });
+      
+      asyncTest("run finding no rows", function() {
+        s.run("SELECT COUNT(*) FROM boxes", function(res) {
+          var count = res.rows.item(0)["COUNT(*)"];
+          equals(count, 0);
+          start();
+        });
+      });
+      
+      asyncTest("run finding a row after inserting", function() {
+        s.run("INSERT INTO boxes (label, contents) VALUES('Box A', 'Contents of Box A')", function(res) {
+          s.run("SELECT COUNT(*) FROM boxes", function(res) {
+            var count = res.rows.item(0)["COUNT(*)"];
+            equals(count, 1);
+            start();
+          });
+        });
+      });
+      
+      asyncTest("renameTable should ensure count fails on original table name, works on new name", function() {
+        s.renameTable("boxes", "containers", function() {
+          s.count("boxes", {}, function(c) {}, function() {
+            ok("count from boxes failed");
+            s.count("containers", {}, function(c) {
+              equals(c, 1);
+              start();
             });
-          };
-
-          document.getElementById("removeABox").onclick = function() {
-            s.read("boxes", null, {order: "id DESC", limit: 1}, function(rows) {
-              if(rows.length) {
-                s.erase("boxes", {id: rows[0].id}, function() {
-                  displayBoxCount();
-                });
-              }
+          });
+        });
+      });
+      
+      asyncTest("addColumn followed by a write should ensure previously-nonexistant col exists when read", function() {
+        expect(3);
+        s.read("containers", null, null, function(rows) {
+          var record = rows[0];
+          equals(record.number, null);
+          s.addColumn("containers", "number", "number", function() {
+            ok("added number col to containers table");
+            record.number = 7;
+            s.write("containers", record, function() {
+              s.read("containers", null, null, function(rows) {
+                equals(rows[0].number, 7);
+                start();
+              });
             });
-          };
-          
-          document.getElementById("removeIndex").onclick = function() {
-            s.dropIndex("boxes", "label");
-          };
-
-          displayBoxCount();
+          });
+        });
+      });
+      
+      asyncTest("3 writes, a conditional count and conditional read", function() {
+        expect(5);
+        var containerA = {label: "Example Container", contents: "stuff inside the container", number: 13};
+        s.write("containers", containerA, function() {
+          ok("wrote example container");
+          var containerB = {label: "Another Example", contents: "stuff inside the other", number: 23};
+          s.write("containers", containerB, function() {
+            ok("wrote another example container");
+            s.count("containers", {label: ["like", "%Example%"]}, function(c) {
+              equals(c, 2);
+              s.read("containers", {number: [">", 10]}, {order: "number"}, function(rows) {
+                equals(rows.length, 2);
+                equals(rows[1].number, 23);
+                start();
+              });
+            });
+          });
+        });
+      });
+      
+      asyncTest("using update to change multiple rows", function() {
+        expect(2);
+        s.count("containers", {label: "updated label"}, function(c) {
+          equals(c, 0);
+          s.update("containers", {label: "updated label"}, {number: [">", 10]}, function() {
+            s.count("containers", {label: "updated label"}, function(c) {
+              equals(c, 2);
+              start();
+            });
+          });
+        });
+      });
+      
+      asyncTest("erasing a row conditionally", function() {
+        expect(3);
+        s.count("containers", null, function(c) {
+          equals(c, 3);
+          s.erase("containers", {label: "updated label"}, function() {
+            ok("erased rows");
+            s.count("containers", null, function(c) {
+              equals(c, 1);
+              start();
+            });
+          });
         });
       });
     </script>
