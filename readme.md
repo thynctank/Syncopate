@@ -3,6 +3,8 @@ Syncopate Asynchronous Abstraction Layer
 
 Syncopate is a simple abstraction layer on top of HTML5/Web Database (and perhaps additional async databases in the future) which can be used to easily read, write, erase, update and count rows from the db, create, drop, and rename tables, add columns, create/drop indices, and performing multiples of these actions nested in transactions.
 
+Syncopate comes with a set of automated unit tests written with [QUnit](http://docs.jquery.com/QUnit).
+
 Syncopate is free and open-source software, licensed under [MIT License](http://www.opensource.org/licenses/mit-license.php)
 
 Documentaion of Functions
