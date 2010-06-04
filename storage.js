@@ -43,20 +43,21 @@ Storage.prototype = {
     return rows;
   },
   _buildConditionSql: function(conditions) {
-    var conditionSql = "";
+    var conditionSql = "",
+        comparisonString;
     if(!conditions)
       return conditionSql;
     
     for(colName in conditions) {
       if(typeof conditions[colName] === "string") {
-        var comparisonString = conditions[colName];
+        comparisonString = conditions[colName];
         comparisonString = comparisonString.replace(/'/g, "''");
         conditionSql += colName + " = '" + comparisonString + "' AND ";
       }
       else if(conditions[colName].constructor === Array) {
         conditionSql += colName + " " + conditions[colName][0] + " ";
         if(typeof conditions[colName][1] === "string") {
-          var comparisonString = conditions[colName][1];
+          comparisonString = conditions[colName][1];
           comparisonString = comparisonString.replace(/'/g, "''");
           conditionSql += "'" + comparisonString + "' AND ";
         }
@@ -158,7 +159,7 @@ Storage.prototype = {
       };
     }
     else {
-      var success = function(resultSet) {
+      success = function(resultSet) {
         var rows = self._buildRows(resultSet);
         self._log(rows);
       };
@@ -191,7 +192,7 @@ Storage.prototype = {
     }
     else {
       var self = this;
-      var success = function(resultSet) {
+      success = function(resultSet) {
         var rowCount = resultSet.rows.item(0)["COUNT(*)"];
         self._log(rowCount);
       };
@@ -205,19 +206,21 @@ Storage.prototype = {
   // data is obj literal with {colName: colVal, colName: colVal}
   // success takes no params for update, insertId if insert
   write: function(table, data, success, failure, tx) {
-    var self = this;
+    var self = this,
+        sql,
+        oldSuccess;
     if(data.id) {
       // build assignment pairs and trim trailing comma
-      var sql = this._buildUpdateSql(table, data);
+      sql = this._buildUpdateSql(table, data);
       
       if(success) {
-        var oldSuccess = success;
+        oldSuccess = success;
         success = function(resultSet) {
           oldSuccess();
         };
       }
       else {
-        var success = function(resultSet) {
+        success = function(resultSet) {
           self._log(resultSet);
         };
       }
@@ -234,16 +237,16 @@ Storage.prototype = {
       colSql = colSql.slice(0, -2);
       valSql = valSql.slice(0, -2);
       
-      var sql = "INSERT INTO " + table + " (" + colSql + ") VALUES(" + valSql + ")";
+      sql = "INSERT INTO " + table + " (" + colSql + ") VALUES(" + valSql + ")";
       
       if(success) {
-        var oldSuccess = success;
+        oldSuccess = success;
         success = function(resultSet) {
           oldSuccess(resultSet.insertId);
         };
       }
       else {
-        var success = function(resultSet) {
+        success = function(resultSet) {
           self._log(resultSet.insertId);
         };
       }
@@ -262,7 +265,7 @@ Storage.prototype = {
     }
     else {
       var self = this;
-      var success = function(resultSet) {
+      success = function(resultSet) {
         self._log(resultSet);
       };
     }
