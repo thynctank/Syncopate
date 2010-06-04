@@ -1,7 +1,10 @@
 function Storage(name, size) {
   // default to 5MB, passing all params in case browsers start getting more stingy
   size = size || 5 * 1024 * 1024;
-  this.db = openDatabase(name + ".syncopate.db", "", "", size, function(){});
+  if(navigator.userAgent.indexOf("webOS") != -1)
+    this.db = openDatabase(name + ".syncopate.db");
+  else
+    this.db = openDatabase(name + ".syncopate.db", "", "", size, function(){});
 } 
 
 Storage.prototype = {
