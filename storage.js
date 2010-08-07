@@ -53,7 +53,8 @@ Storage.prototype = {
         comparisonString,
         sqlParts = [],
         condition,
-        operator;
+        operator,
+        operand;
     if(!conditions)
       return conditionSql;
     
