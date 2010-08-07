@@ -50,7 +50,6 @@ Storage.prototype = {
   },
   _buildConditionSql: function(conditions) {
     var conditionSql = "",
-        comparisonString,
         sqlParts = [],
         condition,
         operator,
