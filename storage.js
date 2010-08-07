@@ -45,36 +45,47 @@ Storage.prototype = {
     }
     return rows;
   },
+  _escapeString: function(str) {
+    return "'" + str.replace(/'/g, "''") +  "'";
+  },
   _buildConditionSql: function(conditions) {
     var conditionSql = "",
-        comparisonString;
+        comparisonString,
+        sqlParts = [],
+        condition,
+        operator;
     if(!conditions)
       return conditionSql;
     
     for(colName in conditions) {
-      if(typeof conditions[colName] === "string") {
-        comparisonString = conditions[colName];
-        comparisonString = comparisonString.replace(/'/g, "''");
-        conditionSql += colName + " = '" + comparisonString + "' AND ";
+      condition = conditions[colName];
+      if(typeof condition === "string") {
+        sqlParts.push(colName + " = " + this._escapeString(condition));
       }
-      else if(conditions[colName].constructor === Array) {
-        conditionSql += colName + " " + conditions[colName][0] + " ";
-        if(typeof conditions[colName][1] === "string") {
-          comparisonString = conditions[colName][1];
-          comparisonString = comparisonString.replace(/'/g, "''");
-          conditionSql += "'" + comparisonString + "' AND ";
+      else if(condition.constructor === Array) {
+        operator = condition[0];
+        operand = condition[1];
+        if(typeof operand === "string") {
+          if(operator.toLowerCase() != "in")
+            operand = this._escapeString(operand);
         }
-        else {
-          conditionSql += conditions[colName][1] + " AND ";
+        else if(operand.constructor === Array) {
+          for(i = 0, j = operand.length; i < j; i++) {
+            var element = operand[i];
+            if(typeof element === "string")
+              operand[i] = this._escapeString(element);
+          }
+          operand = "(" + operand.join(",") + ")";
         }
+        sqlParts.push(colName + " " + operator + " " + operand);
       }
       else
-        conditionSql += colName + " = " + conditions[colName] + " AND ";
+        sqlParts.push(colName + " = " + condition);
     }
-    conditionSql = conditionSql.slice(0, -4);
+    conditionSql = sqlParts.join(" AND ");
 
     if(conditionSql)
-      conditionSql = (" WHERE " + conditionSql);
+      conditionSql = " WHERE " + conditionSql;
       
     return conditionSql;
   },

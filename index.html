@@ -16,6 +16,7 @@
     
     <script type="text/javascript" charset="utf-8">
       var s = new Storage("test");
+      s.logging = true;
       // s.logging = true;
       
       module("Syncopate");
@@ -124,6 +125,26 @@
               equals(c, 1);
               start();
             });
+          });
+        });
+      });
+      
+      asyncTest("finding a row just inserted by using the IN operator w/ array syntax", function() {
+        var labelValues = ["Fruit", "Nuts", "Nunchuku"];
+        s.write("containers", {label: labelValues[Math.floor(Math.random() * 3)], contents: "Contents of Container"}, function() {
+          s.count("containers", {label: ['IN', labelValues]}, function(c) {
+            equals(c, 1);
+            start();
+          });
+        });
+      });
+
+      asyncTest("finding a row just inserted by using the IN operator w/ string syntax", function() {
+        var labelValues = ["Fruit", "Nuts", "Nunchuku"];
+        s.write("containers", {label: labelValues[Math.floor(Math.random() * 3)], contents: "Contents of Container"}, function() {
+          s.count("containers", {label: ['IN', "('" + labelValues.join("','") + "')"]}, function(c) {
+            equals(c, 2);
+            start();
           });
         });
       });
