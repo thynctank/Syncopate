@@ -53,7 +53,8 @@ Storage.prototype = {
         sqlParts = [],
         condition,
         operator,
-        operand;
+        operand,
+        element;
     if(!conditions)
       return conditionSql;
     
@@ -71,7 +72,7 @@ Storage.prototype = {
         }
         else if(operand.constructor === Array) {
           for(i = 0, j = operand.length; i < j; i++) {
-            var element = operand[i];
+            element = operand[i];
             if(typeof element === "string")
               operand[i] = this._escapeString(element);
           }
